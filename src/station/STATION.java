@@ -30,6 +30,7 @@ public class STATION {
     
     DLHeuristic dl;
     ScoreHeuristic score;
+    AntColony antcolony;
     
     long seed = 10000; // seed 
     Random r = new Random(seed); // random number generator
@@ -195,6 +196,10 @@ public class STATION {
             score = new ScoreHeuristic(NV, Global.GRID_N, vehicles);
             score.solve();            
         }
+        else if(algo == 2) {
+        	antcolony = new AntColony(NV, Global.GRID_N, vehicles);
+            antcolony.solve();
+        }
         else{
                        
         }
@@ -208,8 +213,8 @@ public class STATION {
         
         // 0 - number of vehicles
         // 1 - file
-        // 2 - algorithm (0 - DL / 1 - Score)
-        // 3 - depletion rate
+        // 2 - algorithm (0 - DL / 1 - Score/ 2- AntColony)
+        // 3 - depletion rate ( Default 1)
         
         DecimalFormat df = new DecimalFormat("#,##0.00");
         
