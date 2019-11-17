@@ -6,6 +6,7 @@
 package station;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  *
@@ -15,26 +16,185 @@ public class AntColony {
 
     int stationVar[][];
     int coverage[];
+    int scoreLocal[][];
+    double deltaF[][];
+    double tabelaFeromonios[][];
+    double probabilidades[][];
+    double escala [];
+    int bestSolucao[][];
     int numCovVehicles, numStations;
-    int NV, GRID;
+    double feromonioInicial=1;
+    int foMelhorSolucao=999999,iterMax=1;
+    double alfa=1, beta=0.5,fatorEvaporacao=0.9;
+    int NV, GRID,iter=0;
     ArrayList<Vehicle> vehicles;
+    ArrayList<Formiga> formigas;
 
     public AntColony(int NV, int GRID, ArrayList<Vehicle> vehicles) {
 
         stationVar = new int[GRID][GRID];
+        tabelaFeromonios = new double[GRID][GRID];
+        probabilidades = new double[GRID][GRID];
+        deltaF = new double[GRID][GRID];
+        bestSolucao = new int[GRID][GRID];
+        escala = new double[GRID*GRID];
         coverage = new int[vehicles.size()];
         this.NV = NV;
         this.GRID = GRID;
         this.vehicles = vehicles;
         this.numCovVehicles = 0;
         this.numStations = 0;
+        formigas = new ArrayList<Formiga>();
+        //score local usado por cada formiga
+        scoreLocal = new int[GRID][GRID];
+        formigas.add(new Formiga(1,GRID));
+        //formigas.add(new Formiga(2,GRID));
     }
-
+    
+    public void imprimeMatriz(int [][] matriz, int tamanho) {
+    	for(int i=0;i<tamanho;i++) {
+    		for(int j=0;j<tamanho;j++) {
+    			System.out.println("Matriz:"+matriz[i][j]);
+    		}
+    	}
+    }
     public void solve() {
 
         // Constructive Heuristic
-        greedyConstruction();
+        //greedyConstruction();
+    	
+    	//Inicializa a tabela de distribuição de feromônios
+    	for(int i =0;i<GRID;i++) {
+    		for(int j=0;j<GRID;j++) {
+    			tabelaFeromonios[i][j]=feromonioInicial;
+    		}
+    	}
+    	while(iter<iterMax) {
+    		iter++;
+    		
+//    		for(int i=0;i<GRID;i++) {
+//    			for(int j=0;j<GRID;j++) {
+//    				deltaF[i][j]=0;
+//    			}
+//    		}
+    		
+	    	for(Formiga f: formigas) {
+	    		
+	    		for(int i=0;i<GRID;i++) {
+	    			for(int j=0;j<GRID;j++) {
+	    				scoreLocal[i][j]=0;
+	    				stationVar[i][j]=0;
+	    				probabilidades[i][j]=0;
+	    			}
+	    		}
+	    		numCovVehicles = 0;
+	            numStations = 0;
+	    		while(numCovVehicles < NV) {
+		    		getScore();
+		    		double sum =0;
+		    		for(int i=0;i<GRID;i++) {
+		    			for(int j=0;j<GRID;j++) {
+		    				sum+=Math.pow(tabelaFeromonios[i][j],alfa)*Math.pow(scoreLocal[i][j],beta);
+		    			}
+		    		}
+		    		
+		    		//System.out.println("Soma "+sum);
+		    		
+		    		
+		    		for(int i=0;i<GRID;i++) {
+		    			for(int j=0;j<GRID;j++) {
+		    				if(f.getPosicao(i, j)==0) {
+		    					probabilidades[i][j]=(Math.pow(tabelaFeromonios[i][j],alfa)*Math.pow(scoreLocal[i][j],beta))/sum;
+		    					
+		    				}else {
+		    					probabilidades[i][j]=0;
+		    				}
+		    			}
+		    		}
+					double [] vetorProb = new double[GRID*GRID];
+					int cont=0;
+					
+					for(int i=0;i<GRID;i++) {
+						for(int j=0;j<GRID;j++) {
+							vetorProb[cont]=probabilidades[i][j];
+							cont++;
+						}
+					}
+					
+					//Roleta -------
+					for(int i=0;i<GRID*GRID;i++) {
+						escala[i]=0;
+					}
+					escala[0]=vetorProb[0];
+					for(int i=1;i<GRID*GRID;i++) {
+						escala[i]=escala[i-1]+vetorProb[i];
+					}
+					Random r = new Random(); 
+					double aux = r.nextDouble();
+					int k=0;
+					while(escala[k]<aux) {
+						k++;
+						//System.out.println("Escala: "+escala[k]+"/"+aux);
+					}
 
+					cont=0;
+					for(int i=0;i<GRID;i++) {
+						for(int j=0;j<GRID;j++) {
+							if(cont==k) {
+								//System.out.println("POS sorteada i:"+i+" J:"+j);
+								f.setPosicao(i, j);
+								stationVar[i][j]=1;
+								numStations++;
+							}
+							cont++;
+						}
+					}
+					//--------------------------------------
+					updateCoverage();
+	    		}
+	    		
+	    		if(numStations<foMelhorSolucao) {
+	    			foMelhorSolucao=numStations;
+	    			for(int i=0;i<GRID;i++) {
+	    				for(int j=0;j<GRID;j++) {
+	    					bestSolucao[i][j]=0;
+	    					if(stationVar[i][j]==1) {
+	    						bestSolucao[i][j]=1;
+	    					}
+	    				}
+	    			}
+	    		}
+				
+	    		for(int i=0;i<GRID;i++) {
+	    			for(int j=0;j<GRID;j++) {
+	    				if(f.getPosicao(i, j)==1) {
+	    					deltaF[i][j]+=scoreLocal[i][j]*(1/(1+(foMelhorSolucao-numStations)/foMelhorSolucao)); 
+	    				}
+	    			}
+	    		}
+	    		
+	    		//Atualiza feromonios
+	    		for(int i=0;i<GRID;i++) {
+	    			for(int j=0;j<GRID;j++) {
+	    				tabelaFeromonios[i][j]= tabelaFeromonios[i][j]*fatorEvaporacao+deltaF[i][j];
+	    			}
+	    		}
+				
+	    	}
+    	}
+    	
+    	for(int i=0;i<GRID;i++) {
+    		for(int j=0;j<GRID;j++) {
+    			if(bestSolucao[i][j]==1) {
+    				stationVar[i][j]=1;
+    			}
+    		}
+    	}
+    	numStations=foMelhorSolucao;
+    	
+    	
+    		
+    		
         
         System.out.println("\n*** Solution ***\n");
 
@@ -63,8 +223,52 @@ public class AntColony {
         }
         
     }
+    private void getScore() {
+    	int score[][] = new int[GRID][GRID];
+    	
+    	//zerando o score.
+    	for(int i=0;i<GRID;i++) {
+    		for(int j=0;j<GRID;j++) {
+    			score[i][j]=0;
+    		}
+    	}
+    	   // update scores
+    	//stationVar[12][34]=1;
+        for (Vehicle v : vehicles) {
 
-    private void greedyConstruction() {
+            if (coverage[v.getID()] == 0) {
+                double battery = v.getInitBattery();
+                double traveledDist = 0;
+
+                for (Move m : v.getTrace()) {
+
+                    if (battery < v.getRouteSize() - traveledDist  && battery < Global.BATTERY_CAPACITY * 0.1 && stationVar[m.getSquare().getCoordX()][m.getSquare().getCoordY()] == 0) {
+                        score[m.getSquare().getCoordX()][m.getSquare().getCoordY()]++;
+                        battery = Global.BATTERY_CAPACITY;
+                    } 
+                    else if (battery < v.getRouteSize() - traveledDist  && battery < Global.BATTERY_CAPACITY * 0.1 && stationVar[m.getSquare().getCoordX()][m.getSquare().getCoordY()] == 1) {
+                        battery = Global.BATTERY_CAPACITY;
+                    }
+                    battery -= m.getDepletion();
+                    traveledDist += m.getDistance();
+                }
+            }
+            
+        }
+        
+        for(int i=0;i<GRID;i++) {
+        	for(int j=0;j<GRID;j++) {
+        		scoreLocal[i][j]=score[i][j];
+        	}
+        }
+        
+    	
+    }
+    
+   //-----------------------------------------------------------------------------------------------------------
+    
+    @SuppressWarnings("unused")
+	private void greedyConstruction() {
 
         int score[][] = new int[GRID][GRID];
 
@@ -104,8 +308,12 @@ public class AntColony {
             int max = -1, best_i = -1, best_j = -1;
             for (int i = 0; i < GRID; i++) {
                 for (int j = 0; j < GRID; j++) {
+                	if(score[i][j]>1) {
+                		 System.out.println("Score "+score[i][j]);
+                	}
                     if (score[i][j] > max) {
                         max = score[i][j];
+                        //System.out.println("Score "+score[i][j]);
                         best_i = i;
                         best_j = j;
                     }
@@ -115,8 +323,8 @@ public class AntColony {
             // deploy 
             stationVar[best_i][best_j] = 1;
             numStations++;
-            //System.out.println(best_i + " " + best_j);
-            //System.out.println(numStations);
+//            System.out.println(best_i + " " + best_j);
+//            System.out.println(numStations);
 
             // Update coverage
             updateCoverage();

@@ -1,37 +1,50 @@
 package station;
-import java.util.HashMap;
-import java.util.Map;
 
 public class Formiga {
 	int id;
-	int bestSolucao;
+	int numeroEstacao=0;
 	int mapaCaminho [][];
-	// caminho percorrido pela formiga
-	Map <Integer,Integer> caminho = new HashMap<Integer,Integer>();
+
 	
-	
-	public Formiga(int id, int bestSolucao,int GRID) {
+	public Formiga(int id,int GRID) {
 		//mapa com o estado do mapa global para essa formiga.
-		mapaCaminho = new int[GRID][GRID];
 		this.id=id;
-		this.bestSolucao = bestSolucao;
+		mapaCaminho = new int[GRID][GRID];
 		for(int i=0;i<GRID;i++) {
 			for(int j=0;j<GRID;j++) {
+				//mapa de solucoes de cada formiga
 				mapaCaminho[i][j]=0;
 			}
 		}
+		
+			
 	}
-	//define uma posicao no mapa das formigas.
-	public void setPosicao(int i, int j) {
+	//atualiza a posicao do mapa para conter um estacao.
+	public void setPosicao(int i,int j) {
 		mapaCaminho[i][j]=1;
+		this.numeroEstacao++;
 	}
-	
-	public int getPosicao(int i,int j) {
-		//retorna o estado da posicao
+	public int getPosicao(int i, int j) {
 		return mapaCaminho[i][j];
 	}
+	public void setRemoverPosicao(int i,int j) {
+		mapaCaminho[i][j]=0;
+		this.numeroEstacao--;
+	}
+	
+	public int[][] getMapaCompleto(){
+		return mapaCaminho;
+	}
 	public int getId() {
-		return id;
+		return this.id;
+	}
+	
+	public void setId(int id) {
+		this.id=id;
+	}
+	//retorna o número de estacões
+	public int getNumeroEstacoes() {
+		return this.numeroEstacao;
 	}
 
 	
