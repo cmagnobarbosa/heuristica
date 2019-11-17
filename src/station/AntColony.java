@@ -24,9 +24,10 @@ public class AntColony {
     int bestSolucao[][];
     int numCovVehicles, numStations;
     double feromonioInicial=1;
-    int foMelhorSolucao=999999,iterMax=1;
+    int foMelhorSolucao=999999,iterMax=2;
     double alfa=1, beta=0.5,fatorEvaporacao=0.9;
-    int NV, GRID,iter=0;
+    int NV, GRID,iter=0,entrou=0;
+    int numF=2;
     ArrayList<Vehicle> vehicles;
     ArrayList<Formiga> formigas;
 
@@ -47,8 +48,9 @@ public class AntColony {
         formigas = new ArrayList<Formiga>();
         //score local usado por cada formiga
         scoreLocal = new int[GRID][GRID];
-        formigas.add(new Formiga(1,GRID));
-        //formigas.add(new Formiga(2,GRID));
+        for(int i=0;i<numF;i++) {
+        	formigas.add(new Formiga(i,GRID));
+        }
     }
     
     public void imprimeMatriz(int [][] matriz, int tamanho) {
@@ -72,34 +74,56 @@ public class AntColony {
     	while(iter<iterMax) {
     		iter++;
     		
-//    		for(int i=0;i<GRID;i++) {
-//    			for(int j=0;j<GRID;j++) {
-//    				deltaF[i][j]=0;
-//    			}
-//    		}
+    		for(int i=0;i<GRID;i++) {
+    			for(int j=0;j<GRID;j++) {
+    				deltaF[i][j]=0;
+    			}
+    		}
     		
 	    	for(Formiga f: formigas) {
-	    		
+
+	    		System.out.println("Formiga: "+f.getId());
+	    		//zerando variaveis
 	    		for(int i=0;i<GRID;i++) {
 	    			for(int j=0;j<GRID;j++) {
-	    				scoreLocal[i][j]=0;
-	    				stationVar[i][j]=0;
-	    				probabilidades[i][j]=0;
+	    				//scoreLocal[i][j]=0;
+	    				//stationVar[i][j]=0;
+	    				//probabilidades[i][j]=0;
 	    			}
 	    		}
-	    		numCovVehicles = 0;
+	    		this.numCovVehicles = 0;
 	            numStations = 0;
+	            //repete enquanto existir veículos sem cobertura
+	            
 	    		while(numCovVehicles < NV) {
-		    		getScore();
+		    		//atualiza o score local das posicoes
+	    		
+	    			getScore();
+	    			
 		    		double sum =0;
 		    		for(int i=0;i<GRID;i++) {
 		    			for(int j=0;j<GRID;j++) {
-		    				sum+=Math.pow(tabelaFeromonios[i][j],alfa)*Math.pow(scoreLocal[i][j],beta);
+		    				if(f.getPosicao(i, j)==0) {
+		    					sum+=Math.pow(tabelaFeromonios[i][j],alfa)*Math.pow(scoreLocal[i][j],beta);
+		    				}
 		    			}
 		    		}
-		    		
+		    			System.out.println(sum);
+
+		    			for(int i=0;i<GRID;i++) {
+		    				for(int j=0;j<GRID;j++) {
+				    			
+		    					if(scoreLocal[i][j]>1) {
+		    						System.out.println("Formiga :"+f.getId()+" Iter "+iter);
+		    						System.out.println(tabelaFeromonios[i][j]+"|"+scoreLocal[i][j]);
+		    					}
+		    				}
+		    			}
+		  
 		    		//System.out.println("Soma "+sum);
-		    		
+		    		if(sum==0) {
+		    			break;
+		    		}
 		    		
 		    		for(int i=0;i<GRID;i++) {
 		    			for(int j=0;j<GRID;j++) {
@@ -129,6 +153,7 @@ public class AntColony {
 					for(int i=1;i<GRID*GRID;i++) {
 						escala[i]=escala[i-1]+vetorProb[i];
 					}
+					
 					Random r = new Random(); 
 					double aux = r.nextDouble();
 					int k=0;
@@ -150,25 +175,36 @@ public class AntColony {
 						}
 					}
 					//--------------------------------------
+					//System.out.println();
 					updateCoverage();
 	    		}
-	    		
-	    		if(numStations<foMelhorSolucao) {
-	    			foMelhorSolucao=numStations;
+	    		System.out.println("Veiculos cobertos "+numCovVehicles);
+	    		if(f.getNumeroEstacoes()!=0 && f.getNumeroEstacoes()<foMelhorSolucao) {
+	    			System.out.println("Atualizou melhor solucao"+numStations+"Melhor solucao: "+foMelhorSolucao);
+	    			foMelhorSolucao=f.getNumeroEstacoes();
 	    			for(int i=0;i<GRID;i++) {
 	    				for(int j=0;j<GRID;j++) {
-	    					bestSolucao[i][j]=0;
+	    					//bestSolucao[i][j]=0;
+	    					iter=0;
 	    					if(stationVar[i][j]==1) {
 	    						bestSolucao[i][j]=1;
 	    					}
 	    				}
 	    			}
 	    		}
+//	    		else {
+//	    			System.out.println("Não atualizou melhor solucao"+numStations+"Melhor solucao: "+foMelhorSolucao);
+//	    		}
 				
 	    		for(int i=0;i<GRID;i++) {
 	    			for(int j=0;j<GRID;j++) {
-	    				if(f.getPosicao(i, j)==1) {
+	    				if(stationVar[i][j]==1) {
+	    					//System.out.println("FO melhor solucao: "+foMelhorSolucao+"Num Stations: "+numStations+"F.get"+f.getNumeroEstacoes());
 	    					deltaF[i][j]+=scoreLocal[i][j]*(1/(1+(foMelhorSolucao-numStations)/foMelhorSolucao)); 
+	    				
+	    					if(deltaF[i][j]>0) {
+	    						System.out.println("Novo delta F "+deltaF[i][j]);
+	    					}
 	    				}
 	    			}
 	    		}
@@ -177,61 +213,62 @@ public class AntColony {
 	    		for(int i=0;i<GRID;i++) {
 	    			for(int j=0;j<GRID;j++) {
 	    				tabelaFeromonios[i][j]= tabelaFeromonios[i][j]*fatorEvaporacao+deltaF[i][j];
+	    				//System.out.println("Nova tabela feromonios"+tabelaFeromonios[i][j]);
 	    			}
 	    		}
 				
 	    	}
     	}
     	
-    	for(int i=0;i<GRID;i++) {
-    		for(int j=0;j<GRID;j++) {
-    			if(bestSolucao[i][j]==1) {
-    				stationVar[i][j]=1;
-    			}
-    		}
-    	}
-    	numStations=foMelhorSolucao;
-    	
-    	
-    		
-    		
-        
-        System.out.println("\n*** Solution ***\n");
-
-        System.out.println("Number of stations:" + numStations);
-        System.out.println("Number of recharges:" + getNumRecharges());
-
-        // Output
-        for (int i = 0; i < GRID; i++) {
-            for (int j = 0; j < GRID; j++) {
-                if (stationVar[i][j] == 1) {
-                    System.out.print(i + ";" + j + ";;");
-                }
-            }
-        }
-
-        System.out.println("\n");
-        
-        for (int i = 0; i < GRID; i++) {
-            for (int j = 0; j < GRID; j++) {
-                if (stationVar[i][j] == 1){
-                    System.out.print("x");
-                }
-                else System.out.print(" ");
-            }
-            System.out.println();
-        }
+//    	for(int i=0;i<GRID;i++) {
+//    		for(int j=0;j<GRID;j++) {
+//    			if(bestSolucao[i][j]==1) {
+//    				stationVar[i][j]=1;
+//    			}
+//    		}
+//    	}
+//    	numStations=foMelhorSolucao;
+//    	
+//    	
+//    		
+//    		
+//        
+//        System.out.println("\n*** Solution ***\n");
+//
+//        System.out.println("Number of stations:" + numStations);
+//        System.out.println("Number of recharges:" + getNumRecharges());
+//
+//        // Output
+//        for (int i = 0; i < GRID; i++) {
+//            for (int j = 0; j < GRID; j++) {
+//                if (stationVar[i][j] == 1) {
+//                    System.out.print(i + ";" + j + ";;");
+//                }
+//            }
+//        }
+//
+//        System.out.println("\n");
+//        
+//        for (int i = 0; i < GRID; i++) {
+//            for (int j = 0; j < GRID; j++) {
+//                if (stationVar[i][j] == 1){
+//                    System.out.print("x");
+//                }
+//                else System.out.print(" ");
+//            }
+//            System.out.println();
+//        }
         
     }
     private void getScore() {
     	int score[][] = new int[GRID][GRID];
     	
     	//zerando o score.
-    	for(int i=0;i<GRID;i++) {
-    		for(int j=0;j<GRID;j++) {
-    			score[i][j]=0;
-    		}
-    	}
+//    	for(int i=0;i<GRID;i++) {
+//    		for(int j=0;j<GRID;j++) {
+//    			score[i][j]=0;
+//    		}
+//    	}
     	   // update scores
     	//stationVar[12][34]=1;
         for (Vehicle v : vehicles) {
@@ -255,7 +292,7 @@ public class AntColony {
             }
             
         }
-        
+
         for(int i=0;i<GRID;i++) {
         	for(int j=0;j<GRID;j++) {
         		scoreLocal[i][j]=score[i][j];

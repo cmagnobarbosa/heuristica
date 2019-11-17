@@ -42,6 +42,15 @@ public class Formiga {
 	public void setId(int id) {
 		this.id=id;
 	}
+	
+	public void resetarMapa(int GRID) {
+		for(int i=0;i<GRID;i++) {
+			for(int j=0;j<GRID;j++) {
+				mapaCaminho[i][j]=0;
+			}
+		}
+		numeroEstacao=0;
+	}
 	//retorna o número de estacões
 	public int getNumeroEstacoes() {
 		return this.numeroEstacao;
