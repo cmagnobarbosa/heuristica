@@ -27,6 +27,7 @@ public class STATION {
     int NV; // number of vehicles   
     ArrayList<Vehicle> vehicles; // set of vehicles
     Square [][] squares; // set of squares
+    Set<Vehicle> vehiclesInSquare[][]; // set Vehicles in square
     
     DLHeuristic dl;
     ScoreHeuristic score;
@@ -35,11 +36,13 @@ public class STATION {
     long seed = 10000; // seed 
     Random r = new Random(seed); // random number generator
     
-    public STATION(String numVehicles, String file, String algo, String depletion){
+    @SuppressWarnings("unchecked")
+	public STATION(String numVehicles, String file, String algo, String depletion){
         
         this.NV = Integer.parseInt(numVehicles);        
         this.vehicles = new ArrayList<>();
         this.squares = new Square[Global.GRID_N][Global.GRID_N];
+        this.vehiclesInSquare = new Set[Global.GRID_N][Global.GRID_N]; 
         Global.setDepletionRate(Double.parseDouble(depletion));
         
         // creating vehicles
@@ -62,8 +65,8 @@ public class STATION {
         
         // vehicles in square
         int numUsedSquares = 0;
-        Set<Vehicle> vehiclesInSquare[][];
-        vehiclesInSquare = new Set[Global.GRID_N][Global.GRID_N];
+       
+        
         for (int i = 0; i < Global.GRID_N; i++) 
             for (int j = 0; j < Global.GRID_N; j++)
                 vehiclesInSquare[i][j] = new HashSet<>();
@@ -106,30 +109,30 @@ public class STATION {
             distribution[pos]++;
             if (v.getRouteSize() == 0) numZero++;
         }
-        System.out.println("Min distance of a vehicle: " + minDist);
-        System.out.println("Max distance of a vehicle: " + maxDist);
-        System.out.println("Number of vehicles with zero distance: " + numZero);
-        System.out.println("Number of vehicles which will need recharge: " + numRecharge);
+        //System.out.println("Min distance of a vehicle: " + minDist);
+        //System.out.println("Max distance of a vehicle: " + maxDist);
+        //System.out.println("Number of vehicles with zero distance: " + numZero);
+        //System.out.println("Number of vehicles which will need recharge: " + numRecharge);
         
-        System.out.println("\n Route size distribution");
-        for (int i = 0; i < 50; i++){
-            System.out.printf("%6d ", i);
-        }
-        System.out.print("\n");
-        for (int i = 0; i < 50; i++){
-            System.out.printf("%6d ", distribution[i]);
-        }
+        //System.out.println("\n Route size distribution");
+//        for (int i = 0; i < 50; i++){
+//            System.out.printf("%6d ", i);
+//        }
+//        System.out.print("\n");
+//        for (int i = 0; i < 50; i++){
+//            System.out.printf("%6d ", distribution[i]);
+//        }
         
         
         
-        System.out.println("\n\n******************\n");
+       // System.out.println("\n\n******************\n");
         
         /*********************************************************************************/
         
 
         System.out.println("Starting algorithm...");
         run(Integer.parseInt(algo));
-        System.out.println("Finish!");
+        System.out.println("\nFinish!");
     }
     
     private void readFile(String file){
@@ -197,7 +200,7 @@ public class STATION {
             score.solve();            
         }
         else if(algo == 2) {
-        	antcolony = new AntColony(NV, Global.GRID_N, vehicles);
+        	antcolony = new AntColony(NV, Global.GRID_N, vehicles,  vehiclesInSquare);
             antcolony.solve();
         }
         else{
