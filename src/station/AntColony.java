@@ -14,7 +14,8 @@ import java.util.Set;
 
 /**
  *
- * @author fernanda
+ * @author Carlos Magno
+
  */
 public class AntColony {
 
@@ -27,11 +28,11 @@ public class AntColony {
     double bestScore[][];
     int bestSolucao[][];
     int numCovVehicles, numStations;
-    double feromonioInicial=10;
-    int foMelhorSolucao=99999,iterMax=20;
-    double alfa=0.5, beta=25,fatorEvaporacao=0.2;
+    double feromonioInicial=0.5;
+    int foMelhorSolucao=99999,iterMax=3;
+    double alfa=2, beta=1,fatorEvaporacao=0.01;
     int NV, GRID,iter=0,entrou=0;
-    int numF=10;
+    int numF=5;
     ArrayList<Vehicle> vehicles;
     ArrayList<Formiga> formigas;
     Set<Vehicle> posicoes_validas[][]; // set Vehicles in square
@@ -243,10 +244,10 @@ public class AntColony {
 	    				}
 	    			}
 	    		}
-	    		else {
-	    			System.out.println("Não atualizou melhor solucao "+numStations+" Melhor solucao: "+foMelhorSolucao);
-	    			
-	    		}
+//	    		else {
+//	    			System.out.println("Não atualizou melhor solucao "+numStations+" Melhor solucao: "+foMelhorSolucao);
+//	    			
+//	    		}
 
 	    		for(int i=0;i<GRID;i++) {
 	    			for(int j=0;j<GRID;j++) {
@@ -334,20 +335,7 @@ public class AntColony {
     		    writer.close();
     		}
     
-//    public void writeToFilePosicoes(String estacoes,int [][] posicoes) 
-//  		  throws IOException {
-//  			String fileName = "posicao.txt";
-//  		    BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
-//  		    
-//  		    for(int i=0;i<GRID;i++) {
-//  		    	for(int j=0;j<GRID;j++) {
-//  		    		posicoes
-//  		    	}
-//  		    }
-//  		    writer.append("Posicoes: "+estacoes+"\n");
-//  		     
-//  		    writer.close();
-//  		}
+
     
     private double[][] getScore() {
     	double score[][] = new double[GRID][GRID];

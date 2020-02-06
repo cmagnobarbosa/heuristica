@@ -1,5 +1,9 @@
 package station;
+/**
+ *
+ * @author Carlos Magno
 
+ */
 public class Formiga {
 	int id;
 	int numeroEstacao=0;
